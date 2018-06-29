@@ -6,6 +6,12 @@ from tkinter import _setit
 import PIL
 from PIL import Image
 from PIL import ImageTk
+import win32gui
+import win32ui
+import win32con
+import win32print
+from PIL import ImageWin
+
 
 screen = Tk()
 screen.title("One Point Invoice")
@@ -18,30 +24,30 @@ invoicelbl = Label(screen, text="INVOICE", font='Helvetica 18 bold')
 invoicelbl.config(font=("INVOICE", 14))
 invoicelbl.grid(row=1, column=8)
 
-# company adress label and widget
+# company a dress label and widget
 compad = Entry(screen, relief=SOLID)
 compad = Text(screen, height=6, width=30)
 compad.insert(END, "One Point Consulting Ltd\nAlpha House, Unit 14\n100 Villers Road\nLondon\nNW2 5PJ")
-compad.grid(row=4, column=3)
+compad.grid(row=3, column=3)
 
 # project code label and widget
 projcodelbl = Label(screen, text="Project Code", bg="lightskyblue")
 projectcode = Entry(screen, relief=SOLID)
-projcodelbl.grid(row=6, column=8)
-projectcode.grid(row=7, column=8)
+projcodelbl.grid(row=5, column=8)
+projectcode.grid(row=6 ,column=8)
 
 # W.O.NUMBER
 wonumlbl = Label(screen, text="W.O.NUMBER", bg="lightskyblue")
 wonum = Entry(screen, relief=SOLID)
-wonumlbl.grid(row=6, column=6)
-wonum.grid(row=7, column=6)
+wonumlbl.grid(row=5, column=6)
+wonum.grid(row=6, column=6)
 
 # Terms label and widget
 termslbl = Label(screen, text="Terms", bg="lightskyblue")
 terms = Entry(screen, relief=SOLID)
 terms.insert(END, "30 days")
-termslbl.grid(row=6, column=7)
-terms.grid(row=7, column=7)
+termslbl.grid(row=5, column=7)
+terms.grid(row=6, column=7)
 
 # tax date label and widget
 tdlbl = Label(screen, text="Tax Date")
@@ -107,6 +113,7 @@ QTY.insert(0,0)
 PRICE.insert(0,0)
 VATbutton = Checkbutton(screen, text="VAT?", variable=value)
 VATAMOUNT = VAT * (int(PRICE.get()) * 0.2)
+AMOUNTLABEL = Label(screen,text = str(int(PRICE.get()) * int(QTY.get())))
 VATAMOUNTLBL = Label(screen,text = VATAMOUNT)
 VATPERCENTlablel = Label(screen, text=str(VAT * 20) + "%")
 VATlablel = Label(screen, text="£" + str(round(int(VATAMOUNT),2)))
@@ -119,6 +126,7 @@ def updateTable():
     VATAMOUNTLBL['text'] = VATAMOUNT
     VATPERCENTlablel['text'] = str(VAT * 20) + "%"
     VATlablel['text'] = "£" + str(round(int(VATAMOUNT), 2))
+    AMOUNTLABEL['text'] = str(int(PRICE.get() * QTY.get()))
     finalpricelabel['text'] ="£" + str(round(((int(PRICE.get()) * int(QTY.get())) + int(VATAMOUNT)), 2))
 
 
@@ -130,6 +138,7 @@ NAME.grid(row=9, column=5)
 QTY.grid(row=9, column=4)
 VATPERCENTlablel.grid(row=9, column=8)
 VATlablel.grid(row=10, column=7)
+AMOUNTLABEL.grid(row=9,column = 7)
 PRICE.grid(row=9, column=6)
 finalpricelabel.grid(row=11, column=7)
 VATbutton.grid(row=10, column=4)
@@ -143,11 +152,13 @@ Vattop = Label(screen, text="VAT %")
 Pricetop = Label(screen, text="PRICE")
 vattottop = Label(screen, text="VAT TOTAL:")
 tottop = Label(screen, text="TOTAL:")
+AMOUNTtop = Label(screen, text = "AMOUNT:")
 
 QTYtop.grid(row=8, column=4)
 producttop.grid(row=8, column=5)
 Vattop.grid(row=8, column=8)
-Pricetop.grid(row=8, column=7)
+AMOUNTtop.grid(row = 8,column = 7)
+Pricetop.grid(row=8, column=6)
 tottop.grid(row=11, column=6)
 vattottop.grid(row=10, column=6)
 
@@ -237,6 +248,7 @@ def getName():
         if Clientlist[j][0] == dropdown.get():
             global displayName
             invoiceno.delete(0, END)
+            NameLabel['text'] = str(Clientlist[j][0])
             sentence = str(Clientlist[j][0])[:9]
             invoiceno.insert(0, sentence.replace(" ", "") + "-" + str(a))
 
@@ -276,7 +288,11 @@ displayName = "[Select Client]"
 dropdown.set("[Select Client]")
 ClientMenu = OptionMenu(screen, dropdown, *client1d, "Add new Client+", command=optioncheck)
 # Position of the dropdown
-ClientMenu.grid(row=400, column=400)
+ClientMenu.grid(row = 4, column = 2)
+
+
+NameLabel = Label(screen, text="Invoice to: \n" + displayName)
+NameLabel.grid(row=4, column=3)
 
 AddressLabel = Label(screen, text=displayAdress)
 # position where the Address is displayed
@@ -298,6 +314,102 @@ label = Label(image=image)
 label.image = image
 label.grid(row=1,column=1)
 
+def Screenshot():
+    hwnd = win32gui.FindWindow(None, "One Point Invoice")
+    wDC = win32gui.GetWindowDC(hwnd)
+    dcObj = win32ui.CreateDCFromHandle(wDC)
+    cDC = dcObj.CreateCompatibleDC()
+    dataBitMap = win32ui.CreateBitmap()
+    dataBitMap.CreateCompatibleBitmap(dcObj, 1500, 900)
+    cDC.SelectObject(dataBitMap)
+    cDC.BitBlt((0, 0), (1500, 900), dcObj, (0, 0), win32con.SRCCOPY)
+    dataBitMap.SaveBitmapFile(cDC, Sventry.get() + ".bmp")
+    # Free Resources
+    dcObj.DeleteDC()
+    cDC.DeleteDC()
+    win32gui.ReleaseDC(hwnd, wDC)
+    win32gui.DeleteObject(dataBitMap.GetHandle())
+
+    #
+    # Constants for GetDeviceCaps
+    #
+    #
+    # HORZRES / VERTRES = printable area
+    #
+    HORZRES = 8
+    VERTRES = 10
+    #
+    # LOGPIXELS = dots per inch
+    #
+    LOGPIXELSX = 88
+    LOGPIXELSY = 90
+    #
+    # PHYSICALWIDTH/HEIGHT = total area
+    #
+    PHYSICALWIDTH = 110
+    PHYSICALHEIGHT = 111
+    #
+    # PHYSICALOFFSETX/Y = left / top margin
+    #
+    PHYSICALOFFSETX = 130
+    PHYSICALOFFSETY = 117
+
+    printer_name = win32print.GetDefaultPrinter()
+    file_name = Sventry.get()
+
+    #
+    # You can only write a Device-independent bitmap
+    #  directly to a Windows device context; therefore
+    #  we need (for ease) to use the Python Imaging
+    #  Library to manipulate the image.
+    #
+    # Create a device context from a named printer
+    #  and assess the printable size of the paper.
+    #
+    hDC = win32ui.CreateDC()
+    hDC.CreatePrinterDC(printer_name)
+    printable_area = hDC.GetDeviceCaps(HORZRES), hDC.GetDeviceCaps(VERTRES)
+    printer_size = hDC.GetDeviceCaps(PHYSICALWIDTH), hDC.GetDeviceCaps(PHYSICALHEIGHT)
+    printer_margins = hDC.GetDeviceCaps(PHYSICALOFFSETX), hDC.GetDeviceCaps(PHYSICALOFFSETY)
+
+    #
+    # Open the image, rotate it if it's wider than
+    #  it is high, and work out how much to multiply
+    #  each pixel by to get it as big as possible on
+    #  the page without distorting.
+    #
+    bmp = Image.open(file_name + ".bmp")
+    if bmp.size[0] > bmp.size[1]:
+        bmp = bmp.rotate(90)
+
+    ratios = [1.0 * printable_area[0] / bmp.size[0], 1.0 * printable_area[1] / bmp.size[1]]
+    scale = min(ratios)
+
+    #
+    # Start the print job, and draw the bitmap to
+    #  the printer device at the scaled size.
+    #
+    hDC.StartDoc(file_name + ".bmp")
+    hDC.StartPage()
+
+    dib = ImageWin.Dib(bmp)
+    scaled_width, scaled_height = [int(scale * i) for i in bmp.size]
+    x1 = int((printer_size[0] - scaled_width) / 2)
+    y1 = int((printer_size[1] - scaled_height) / 2)
+    x2 = x1 + scaled_width
+    y2 = y1 + scaled_height
+    dib.draw(hDC.GetHandleOutput(), (x1, y1, x2, y2))
+
+    hDC.EndPage()
+    hDC.EndDoc()
+    hDC.DeleteDC()
+
+Sventry = Entry(screen)
+Sventry.insert(END,"[FILE NAME]")
+Sventry.grid(row = 14, column = 8)
+
+Svbutton = Button(screen, text = "Save Invoice", command = Screenshot)
+Svbutton.grid(row=15,column = 8)
 '''#image for one point logo#
 
 imagefile="image.jpg"
