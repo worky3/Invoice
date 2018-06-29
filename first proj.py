@@ -11,11 +11,11 @@ import win32ui
 import win32con
 import win32print
 from PIL import ImageWin
-
+from win32api import GetSystemMetrics
 
 screen = Tk()
 screen.title("One Point Invoice")
-screen.geometry("1500x900")
+screen.geometry(str(GetSystemMetrics(0)) +"x"+ str(GetSystemMetrics(1)))
 screen.iconbitmap('onepoint_logo.ico')
 screen.configure(background='white')
 
@@ -126,7 +126,7 @@ def updateTable():
     VATAMOUNTLBL['text'] = VATAMOUNT
     VATPERCENTlablel['text'] = str(VAT * 20) + "%"
     VATlablel['text'] = "£" + str(round(int(VATAMOUNT), 2))
-    AMOUNTLABEL['text'] = str(int(PRICE.get() * QTY.get()))
+    AMOUNTLABEL['text'] = str(int(PRICE.get() * int(QTY.get())))
     finalpricelabel['text'] ="£" + str(round(((int(PRICE.get()) * int(QTY.get())) + int(VATAMOUNT)), 2))
 
 
@@ -320,9 +320,9 @@ def Screenshot():
     dcObj = win32ui.CreateDCFromHandle(wDC)
     cDC = dcObj.CreateCompatibleDC()
     dataBitMap = win32ui.CreateBitmap()
-    dataBitMap.CreateCompatibleBitmap(dcObj, 1500, 900)
+    dataBitMap.CreateCompatibleBitmap(dcObj, GetSystemMetrics(0), GetSystemMetrics(1)-200)
     cDC.SelectObject(dataBitMap)
-    cDC.BitBlt((0, 0), (1500, 900), dcObj, (0, 0), win32con.SRCCOPY)
+    cDC.BitBlt((0, 0), (GetSystemMetrics(0), GetSystemMetrics(1)-200), dcObj, (10, 100), win32con.SRCCOPY)
     dataBitMap.SaveBitmapFile(cDC, Sventry.get() + ".bmp")
     # Free Resources
     dcObj.DeleteDC()
